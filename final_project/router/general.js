@@ -6,28 +6,58 @@ const public_users = express.Router();
 
 
 public_users.post("/register", (req,res) => {
-    const username = req.body.username
-    const password = req.body.password
-  
-    if (username && password) {
-      if (!isValid(username)) {
-        users.push({"username": username, "password": password});
-        return res.json({message: `User ${username} has been successfully registered. Now you can log in!`});
-      }
-      return res.status(400).json({message: `User ${username} already exists!`});
+    const username = req.body.username;
+  const password = req.body.password;
+  if (username && password) {
+    if (!isValid(username)) {
+      users.push({"username":username,"password":password});
+      return res.status(200).json({message: "User successfully registred. Now you can login"});
+    } else {
+      return res.status(404).json({message: "User already exists!"});
     }
-    return res.status(400).json({message: "Unable to register user!"});
+  }
+  return res.status(404).json({message: "Unable to register user."});
 });
 
 // Get the book list available in the shop
 public_users.get('/',function (req, res) {
-    res.send(JSON.stringify(books, null, 4));
+    let getBookList = new Promise((resolve, reject) => {
+        if (books) {
+          resolve()
+        } else {
+          reject("There are no books in the list!")
+        }
+      })
+    
+      getBookList.then(
+        () => {
+          return res.json(books);
+        },
+        (msg) => {
+          return res.json({message: msg});
+        }
+      )
 });
 
 // Get book details based on ISBN
 public_users.get('/isbn/:isbn',function (req, res) {
-  const ISBN = req.params.isbn;
-  res.send(books[ISBN])
+    const isbn = req.params.isbn;
+    let getBookDetails = new Promise((resolve, reject) => {
+      if (books[isbn]) {
+        resolve(books[isbn])
+      } else {
+        reject(`Book with ISBN ${isbn} not found!`)
+      }
+    })
+  
+    getBookDetails.then(
+      (details) => {
+        return res.json(details)
+      },
+      (msg) => {
+        res.status(404).json({message: msg})
+      }
+    )
  });
   
 // Get book details based on author
@@ -44,7 +74,8 @@ public_users.get('/author/:author',function (req, res) {
     if(mylist.length == 0){
         return res.status(300).json({message: "No books available."});
     }
-});
+    res.send(mylist);
+    });
 
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
